@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participation Token Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #3366cc;
+        }
+
+        button, input[type="text"], input[type="number"] {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: none;
+            margin: 10px 0;
+        }
+
+        button {
+            background-color: #3366cc;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2554a7;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .balance {
+            background-color: #eef1f6;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .footer a {
+            color: #3366cc;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Participation Token Management</h1>
+
+        <div class="balance">
+            <p>Your Balance: <span id="balance">0</span> PTK</p>
+            <p>Total Supply: <span id="totalSupply">0</span> PTK</p>
+            <p>Cap: <span id="cap">2.5</span> PTK</p> <!-- Displaying the cap here -->
+        </div>
+        
+        <!-- Reward Tokens -->
+        <div class="form-group">
+            <input type="text" id="studentAddress" placeholder="Enter Student Address" />
+            <input type="number" id="tokenAmount" placeholder="Enter Token Amount" min="1" />
+            <button onclick="rewardTokens()">Reward Tokens</button>
+        </div>
+
+        <!-- Burn Tokens -->
+        <div class="form-group">
+            <input type="text" id="burnAddress" placeholder="Enter Address to Burn" />
+            <input type="number" id="burnAmount" placeholder="Enter Burn Amount" min="1" />
+            <button onclick="burnTokens()">Burn Tokens</button>
+        </div>
+
+        <!-- Transfer Ownership -->
+        <div class="form-group">
+            <input type="text" id="newTeacherAddress" placeholder="New Teacher's Address" />
+            <button onclick="transferOwnership()">Transfer Ownership</button>
+        </div>
+
+        <button onclick="connectMetaMask()">Connect MetaMask</button>
+        <p class="info"></p>
+    </div>
+
+    <div class="footer">
+        <p>Made by <a href="https://www.linkedin.com/in/anhad-thukral-9b94a727b/" target="_blank">Anhad Thukral</a></p>
+        <p>
+            <a href="https://www.youtube.com/@anhadorigamichannel9800" target="_blank">YouTube</a> |
+            <a href="https://www.instagram.com/anhadthukral/" target="_blank">Instagram</a> |
+            <a href="https://www.linkedin.com/in/anhad-thukral-9b94a727b/" target="_blank">LinkedIn</a> |
+            <a href="https://github.com/Anhadcoder" target="_blank">GitHub</a>
+        </p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+    <script>
+        let web3;
+        let account;
+        const contractAddress = "0xcc16f60f78bde906d7e23be3bfae979ee6ae0267"; 
+        const contractAbi =[
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "student",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "burnTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousTeacher",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newTeacher",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "student",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "rewardTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "student",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "TokensBurned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "student",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "TokensRewarded",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newTeacher",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "CAP",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "teacher",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]; 
+        let contract;
+
+        async function connectMetaMask() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    await ethereum.request({ method: 'eth_requestAccounts' });
+                    account = (await web3.eth.getAccounts())[0];
+                    contract = new web3.eth.Contract(contractAbi, contractAddress);
+
+                    document.querySelector('.info').textContent = `Connected: ${account}`;
+                    updateBalanceAndSupply();
+                } catch (error) {
+                    console.error("Connection failed", error);
+                }
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        async function updateBalanceAndSupply() {
+            try {
+                const balance = await contract.methods.balanceOf(account).call();
+                const totalSupply = await contract.methods.totalSupply().call();
+                const cap = await contract.methods.CAP().call();
+
+                document.getElementById("balance").textContent = web3.utils.fromWei(balance, 'ether');
+                document.getElementById("totalSupply").textContent = web3.utils.fromWei(totalSupply, 'ether');
+                document.getElementById("cap").textContent = web3.utils.fromWei(cap, 'ether');
+            } catch (error) {
+                console.error("Failed to fetch balance and supply", error);
+            }
+        }
+
+        async function rewardTokens() {
+            const studentAddress = document.getElementById("studentAddress").value;
+            const tokenAmount = document.getElementById("tokenAmount").value;
+
+            if (!web3.utils.isAddress(studentAddress)) {
+                alert("Invalid student address");
+                return;
+            }
+
+            if (tokenAmount <= 0) {
+                alert("Please enter a valid token amount");
+                return;
+            }
+
+            try {
+                const amount = web3.utils.toWei(tokenAmount, 'ether');
+                await contract.methods.rewardTokens(studentAddress, amount).send({ from: account });
+                alert("Tokens rewarded successfully!");
+                updateBalanceAndSupply();
+            } catch (error) {
+                console.error("Failed to reward tokens", error);
+            }
+        }
+
+        async function burnTokens() {
+            const burnAddress = document.getElementById("burnAddress").value;
+            const burnAmount = document.getElementById("burnAmount").value;
+
+            if (!web3.utils.isAddress(burnAddress)) {
+                alert("Invalid address");
+                return;
+            }
+
+            if (burnAmount <= 0) {
+                alert("Please enter a valid burn amount");
+                return;
+            }
+
+            try {
+                const amount = web3.utils.toWei(burnAmount, 'ether');
+                await contract.methods.burnTokens(burnAddress, amount).send({ from: account });
+                alert("Tokens burned successfully!");
+                updateBalanceAndSupply();
+            } catch (error) {
+                console.error("Failed to burn tokens", error);
+            }
+        }
+
+        async function transferOwnership() {
+            const newTeacherAddress = document.getElementById("newTeacherAddress").value;
+
+            if (!web3.utils.isAddress(newTeacherAddress)) {
+                alert("Invalid new teacher address");
+                return;
+            }
+
+            try {
+                await contract.methods.transferOwnership(newTeacherAddress).send({ from: account });
+                alert("Ownership transferred successfully!");
+            } catch (error) {
+                console.error("Failed to transfer ownership", error);
+            }
+        }
+    </script>
+
+</body>
+</html>
