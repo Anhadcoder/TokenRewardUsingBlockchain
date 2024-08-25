@@ -24,9 +24,4 @@ script.js: JavaScript code for user interaction and interaction with the smart c
 
 
 
-
-
-
-
-
-
+![image](https://github.com/user-attachments/assets/3576c417-7c22-4ebb-8f9c-12c23e1d77d8)
