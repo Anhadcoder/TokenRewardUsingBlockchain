@@ -21,20 +21,7 @@ Project Structure:
 index.html: The main HTML file for the user interface.
 style.css: Stylesheet for the user interface.
 script.js: JavaScript code for user interaction and interaction with the smart contract.
-Developer Details:
 
-Anhad Thukral (you can replace this with your information)
-Links to your social media profiles (optional)
-**Getting Started (**Note: This section might require additional information specific to your project's requirements)
-
-Clone this repository.
-Install dependencies (if any).
-Configure the smart contract address in script.js.
-Deploy the smart contract to a blockchain network (if applicable).
-Run a local development server (e.g., npm start).
-Disclaimer:
-
-This is a basic example and might require further configuration based on your specific implementation.
 
 
 
