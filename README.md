@@ -1,2 +1,2 @@
-# TokenRewardUsingBlockchain
-this is a basic overview for rewarding tokens for attending any event
+Participation Token Management is a web application designed to facilitate the management of participation tokens (PTK) on the Ethereum blockchain. This application provides an intuitive interface for users to interact with a smart contract, enabling functions such as rewarding tokens, burning tokens, and transferring ownership of the token contract. By connecting to MetaMask, users can seamlessly manage their token operations directly from their browser.
+
